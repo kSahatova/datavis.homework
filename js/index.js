@@ -24,10 +24,28 @@ let rParam = 'gdp';
 let year = '2000';
 let param = 'child-mortality';
 let lineParam = 'gdp';
-let choiced_country;
+let selected_country;
+
+const x = d3.scaleLinear().range([margin*2, width-margin]); 
+const y = d3.scaleLinear().range([height-margin, margin]); //in SVG y positions increase towards the bottom of the document
+
+
+const xBar = d3.scaleBand().range([margin*2, barWidth-margin]).padding(0.1);
+const yBar = d3.scaleLinear().range([height-margin, margin]);
+
+
+const xLineAxis = lineChart.append('g').attr('transform', `translate(0, ${height-margin})`);
+const yLineAxis = lineChart.append('g').attr('transform', `translate(${margin*2}, 0)`);
+
+
+const xBarAxis = barChart.append('g').attr('transform', `translate(0, ${height-margin})`);
+const yBarAxis = barChart.append('g').attr('transform', `translate(${margin*2}, 0)`);
+
 
 const colorScale = d3.scaleOrdinal().range(['#DD4949', '#39CDA1', '#FD710C', '#A14BE5']);
 const radiusScale = d3.scaleSqrt().range([10, 30]);
+
+const regions = ['africa', 'asia', 'europe', 'americas'];
 
 loadData().then(data => {
 
@@ -61,29 +79,23 @@ loadData().then(data => {
         updateBarChart(param);
     });
     
-    function updateScatterPlot(x_axis, y_axis, r_axis){
+    function updateScatterPlot(xParam, yParam, rParam){
         scatterPlot.selectAll("g").remove();
 
-        var min_max_x = [d3.min(data, d => +d[x_axis][year]), d3.max(data, d => +d[x_axis][year])] 
-        var xAxis = d3.scaleLinear()
-        .range([margin*2, width-margin])
-        .domain(min_max_x);
+        
+        x.domain(d3.extent(data, d => +d[xParam][year]));
         scatterPlot.append('g')
-        .attr('transform', `translate(0, ${height-margin})`)
-        .call(d3.axisBottom(xAxis));
+        .attr('transform', `translate(0, ${height - margin})`)
+        .call(d3.axisBottom(x));
 
-        var min_max_y = [d3.min(data, d => +d[y_axis][year]), d3.max(data, d => +d[y_axis][year])] 
-        var yAxis   = d3.scaleLinear()
-        .range([height-margin, margin])
-        .domain(min_max_y);
+        
+        y.domain(d3.extent(data, d => +d[yParam][year]));
         scatterPlot.append('g')
         .attr('transform', `translate(${margin*2}, 0)`)
-        .call(d3.axisLeft(yAxis));
-        
-        var min_max_r = [d3.min(data, d => +d[r_axis][year]), d3.max(data, d => +d[r_axis][year])] 
-        var radiusScale = d3.scaleSqrt()
-        .range([10, 30])
-        .domain(min_max_r);
+        .call(d3.axisLeft(y));
+
+
+        radiusScale.domain(d3.extent(data, d => +d[rParam][year]));
         
         scatterPlot
         .append('g')
@@ -91,64 +103,51 @@ loadData().then(data => {
         .data(data)
         .enter()
         .append("circle")
-        .attr("cx", d => (d[x_axis]) ? xAxis(+d[x_axis][year]) : xAxis(0))
-        .attr("cy", d => (d[y_axis]) ? yAxis(+d[y_axis][year]) : yAxis(0))
-        .attr("r", d => (d[r_axis]) ? radiusScale(+d[r_axis][year]) : radiusScale(0))
+        .attr("cx", d => (d[xParam]) ? x(+d[xParam][year]) : x(0))
+        .attr("cy", d => (d[yParam]) ? y(+d[yParam][year]) : y(0))
+        .attr("r", d => (d[rParam]) ? radiusScale(+d[rParam][year]) : radiusScale(0))
         .attr("fill", d => colorScale(d.region))
         .on('click', function (param_click) {
-            choiced_country = param_click.country
-            console.log(choiced_country)
-            countryName.html(choiced_country);
+            selected_country = param_click.country
+            console.log(selected_country)
+            countryName.html(selected_country);
             
             updateLinearPlot(param);
 
             scatterPlot
             .selectAll("circle")
             .attr("stroke", 'black')
-            .attr("stroke-width", d => d.country === choiced_country ? 1.0: .0);
+            .attr("stroke-width", d => d.country === selected_country ? 0.5: .0);
 
 
         });
     }
 
-    function updateBarChart(p){
-        barChart.selectAll("g").remove()
-        
-        regs = ['africa', 'asia', 'europe', 'americas']
+    function updateBarChart(param){
+        barChart.selectAll("g").remove();        
 
-        var xBarAxis = d3.scaleBand()
-        .range([margin*2, barWidth-margin])
-        .domain(regs)
-        .padding(0.1);
-        barChart.append('g')
-        .attr('transform', `translate(0, ${height-margin})`)
-        .call(d3.axisBottom(xBarAxis))
+        xBar.domain(regions);
+        xBarAxis.call(d3.axisBottom(xBar));  
         
-        var min_max_y = [d3.min(data, d => +d[p][year]), d3.max(data, d => +d[p][year])] 
-        var yBarAxis = d3.scaleLinear()
-        .range([height-margin, margin])
-        .domain(min_max_y);
-        barChart.append('g')
-        .attr('transform', `translate(${margin*2}, 0)`)
-        .call(d3.axisLeft(yBarAxis))
+        yBar.domain(d3.extent(data, d => +d[param][year]));
+        yBarAxis.call(d3.axisLeft(yBar));
 
         data_regs = []
         
-        for (reg of regs)
+        for (reg of regions)
         {
             data_regs.push({'reg': reg, 
-            'value': d3.mean(data, function (d) { if (reg == d.region) return +d[p][year]})})
+            'value': d3.mean(data, function (d) { if (reg == d.region) return +d[param][year]})})
         }
         barChart.append('g')
         .selectAll(".bar")
         .data(data_regs)
-        .enter()
-        .append("rect")
-        .attr("x", d => xBarAxis(d.reg))
-        .attr("y", d => yBarAxis(d.value)) 
+        .enter().append("rect")
+        .attr("x", d => xBar(d.reg))
+        .attr("y", d => yBar(d.value)) 
         .style("fill", d => colorScale(d.reg) )
-        .attr("width", xBarAxis.bandwidth())
-        .attr("height", d => height - yBarAxis(d.value) - margin) 
+        .attr("width", xBar.bandwidth()) //x-scale returns a calculated bandwidth
+        .attr("height", d => height - yBar(d.value) - margin) 
         .on('click', function (param_click) {
             console.log(param_click.reg)
             choiced_reg = param_click.reg
@@ -163,30 +162,22 @@ loadData().then(data => {
         
     }
 
-    function updateLinearPlot(p){
+    function updateLinearPlot(param){
         lineChart.selectAll('g, path').remove();
         
-        var country_cur = data.findIndex(d => d.country === choiced_country)
-        var xData = Object.keys(data[country_cur][p]).map(d => +d).slice(0, -5);
-        var yData = Object.values(data[country_cur][p]).map(d => +d).slice(0, -5);
+        let country_cur = data.findIndex(d => d.country === selected_country)
+        let xData = Object.keys(data[country_cur][param]).map(d => +d).slice(0, -5);
+        let yData = Object.values(data[country_cur][param]).map(d => +d).slice(0, -5);
         
-        var min_max_x = [d3.min(xData, d => d), d3.max(xData, d => d)]
-        console.log(xData)
-        var xLineAxis = d3.scaleLinear()
-        .range([margin*2, width-margin])
-        .domain(min_max_x);
+        x.domain(d3.extent(xData, d => d));
         lineChart.append('g')
         .attr('transform', `translate(0, ${height-margin})`)
-        .call(d3.axisBottom(xLineAxis));
+        .call(d3.axisBottom(x));
         
-        var min_max_y = [d3.min(yData), d3.max(yData)]
-        console.log(min_max_y)
-        var yLineAxis = d3.scaleLinear()
-        .range([height-margin, margin])
-        .domain(min_max_y);
+        y.domain(d3.extent(yData));
         lineChart.append('g')
         .attr('transform', `translate(${margin*2}, 0)`)
-        .call(d3.axisLeft(yLineAxis));
+        .call(d3.axisLeft(y));
         
         data_LP = []
     
@@ -201,9 +192,9 @@ loadData().then(data => {
         .attr("stroke", "steelblue")
         .attr("stroke-width", 1.5)
         .attr("d", d3.line()
-        .x(d => xLineAxis(d.x))
-        .y(d => yLineAxis(d.y))
-        )
+        .x(function (d) {return x(d.x)})
+        .y(function (d) {return y(d.y)})
+        );
         
     }
     
