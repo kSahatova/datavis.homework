@@ -45,8 +45,8 @@ loadData().then(data => {
     d3.select('#range').on('change', function(){
         year = d3.select(this).property('value');
         yearLable.html(year);
-        updateScatterPlot(param);
-        updateBar(param);
+        updateScatterPlot(xParam, yParam, rParam);
+        updateBarChart(param);
     });
 
     d3.select('#radius').on('change', function(){
@@ -71,7 +71,7 @@ loadData().then(data => {
     });
 
     d3.select('#p').on('change', function(){
-        lineParam = d3.select(this).property('value');
+        lineParam = d3.select(this).property('value');        
         updateLinearPlot(lineParam);
     });
     
@@ -105,7 +105,7 @@ loadData().then(data => {
         .attr("fill", d => colorScale(d.region))
         .on('click', function (param_click) {
             selected_country = param_click.country
-            console.log(selected_country)
+            console.log(selected_country);
             countryName.html(selected_country);
 
             document.getElementById("linearChartContainer").style.display = "flex";
@@ -148,17 +148,17 @@ loadData().then(data => {
         .attr("x", d => xBar(d.reg))
         .attr("y", d => yBar(d.value)) 
         .style("fill", d => colorScale(d.reg) )
-        .attr("width", xBar.bandwidth()) //x-scale returns a calculated bandwidth
+        .attr("width", xBar.bandwidth())         //x-scale returns a calculated bandwidth
         .attr("height", d => height - yBar(d.value) - margin) 
         .on('click', function (param_click) {
             console.log(param_click.reg)
-            choiced_reg = param_click.reg
+            selected_reg = param_click.reg
             barChart.selectAll('rect')
-            .style('opacity', d => d.reg === choiced_reg ? 1.0: .2);
+            .style('opacity', d => d.reg === selected_reg ? 1.0: .2);
             
             scatterPlot
             .selectAll("circle")
-            .style('opacity', d => d.region === choiced_reg ? 1.0: 0);
+            .style('opacity', d => d.region === selected_reg ? 1.0: 0);
         })
         
         
@@ -168,11 +168,19 @@ loadData().then(data => {
         lineChart.selectAll('g, path').remove();
         
         let country_cur = data.findIndex(d => d.country === selected_country);
-        console.log(country_cur);
-
-        let years = Object.keys(data[country_cur][param]).map(d => +d).slice(0, -5);
-        let feature = Object.values(data[country_cur][param]).map(d => +d).slice(0, -5);
         
+        var years = Object.keys(data[country_cur][param]).map(d => +d);
+        var feature = Object.values(data[country_cur][param]).map(d => +d);
+        if (param == 'population'){
+            years = years.slice(0, -7);
+            feature = feature.slice(0, -7);
+
+        } else{
+            years = years.slice(0, -5);
+            feature = feature.slice(0, -5);
+        }
+
+               
         x.domain(d3.extent(years, d => d));
         lineChart.append('g')
         .attr('transform', `translate(0, ${height-margin})`)
