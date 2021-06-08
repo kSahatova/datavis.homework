@@ -81,7 +81,7 @@ loadData().then(data => {
 
     d3.select('#p').on('change', function(){
         lineParam = d3.select(this).property('value');
-        updateLineChart(param);
+        updateLinePlot(param);
     });
     
 
@@ -170,7 +170,7 @@ loadData().then(data => {
     function updateLinearPlot(param){
         lineChart.selectAll('g, path').remove();
         
-        let country_cur = data.findIndex(d => d.country === selected_country)
+        let country_cur = data.findIndex(d => d.country === selected_country);
         console.log(country_cur);
 
         let xData = Object.keys(data[country_cur][param]).map(d => +d);
