@@ -51,34 +51,40 @@ loadData().then(data => {
 
     colorScale.domain(d3.set(data.map(d=>d.region)).values());
 
-    d3.select('#range').on('change', function(){ 
+    d3.select('#range').on('change', function(){
         year = d3.select(this).property('value');
         yearLable.html(year);
-        updateScatterPlot(xParam, yParam, rParam);
-        updateBarChart(param);
-        
+        updateScatterPlot(param);
+        updateBar(param);
     });
 
-    d3.select('#radius').on('change', function(){ 
+    d3.select('#radius').on('change', function(){
         rParam = d3.select(this).property('value');
         updateScatterPlot(xParam, yParam, rParam);
     });
 
-    d3.select('#x').on('change', function(){ 
+    d3.select('#x').on('change', function(){
         xParam = d3.select(this).property('value');
         updateScatterPlot(xParam, yParam, rParam);
     });
 
-    d3.select('#y').on('change', function(){ 
+    d3.select('#y').on('change', function(){
         yParam = d3.select(this).property('value');
         updateScatterPlot(xParam, yParam, rParam);
+
     });
 
-    d3.select('#param').on('change', function(){ 
+    d3.select('#param').on('change', function(){
         param = d3.select(this).property('value');
         updateBarChart(param);
     });
+
+    d3.select('#p').on('change', function(){
+        lineParam = d3.select(this).property('value');
+        updateLineChart(param);
+    });
     
+
     function updateScatterPlot(xParam, yParam, rParam){
         scatterPlot.selectAll("g").remove();
 
@@ -98,10 +104,9 @@ loadData().then(data => {
         radiusScale.domain(d3.extent(data, d => +d[rParam][year]));
         
         scatterPlot
-        .append('g')
+        .append("g")
         .selectAll("circle")
-        .data(data)
-        .enter()
+        .data(data).enter()
         .append("circle")
         .attr("cx", d => (d[xParam]) ? x(+d[xParam][year]) : x(0))
         .attr("cy", d => (d[yParam]) ? y(+d[yParam][year]) : y(0))
@@ -165,9 +170,12 @@ loadData().then(data => {
     function updateLinearPlot(param){
         lineChart.selectAll('g, path').remove();
         
-        let country_cur = data.findIndex(d => d.country === selected_country)
-        let xData = Object.keys(data[country_cur][param]).map(d => +d).slice(0, -5);
-        let yData = Object.values(data[country_cur][param]).map(d => +d).slice(0, -5);
+        let country_cur = data.find(d => d.country == selected_country)
+        console.log(country_cur);
+
+        let xData = Object.keys(data[country_cur][param]).map(d => +d).slice(0, 221);
+        console.log(xData);
+        let yData = Object.values(data[country_cur][param]).map(d => +d);
         
         x.domain(d3.extent(xData, d => d));
         lineChart.append('g')
