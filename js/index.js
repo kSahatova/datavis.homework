@@ -170,10 +170,10 @@ loadData().then(data => {
     function updateLinearPlot(param){
         lineChart.selectAll('g, path').remove();
         
-        let country_cur = data.find(d => d.country == selected_country)
+        let country_cur = data.findIndex(d => d.country === selected_country)
         console.log(country_cur);
 
-        let xData = Object.keys(data[country_cur][param]).map(d => +d).slice(0, 221);
+        let xData = Object.keys(data[country_cur][param]).map(d => +d);
         console.log(xData);
         let yData = Object.values(data[country_cur][param]).map(d => +d);
         
