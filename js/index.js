@@ -24,7 +24,7 @@ let rParam = 'gdp';
 let year = '2000';
 let param = 'child-mortality';
 let lineParam = 'gdp';
-let selected_country;
+let selected_country = 'Russia';
 
 const x = d3.scaleLinear().range([margin*2, width-margin]); 
 const y = d3.scaleLinear().range([height-margin, margin]); //in SVG y positions increase towards the bottom of the document
@@ -32,15 +32,6 @@ const y = d3.scaleLinear().range([height-margin, margin]); //in SVG y positions 
 
 const xBar = d3.scaleBand().range([margin*2, barWidth-margin]).padding(0.1);
 const yBar = d3.scaleLinear().range([height-margin, margin]);
-
-
-const xLineAxis = lineChart.append('g').attr('transform', `translate(0, ${height-margin})`);
-const yLineAxis = lineChart.append('g').attr('transform', `translate(${margin*2}, 0)`);
-
-
-const xBarAxis = barChart.append('g').attr('transform', `translate(0, ${height-margin})`);
-const yBarAxis = barChart.append('g').attr('transform', `translate(${margin*2}, 0)`);
-
 
 const colorScale = d3.scaleOrdinal().range(['#DD4949', '#39CDA1', '#FD710C', '#A14BE5']);
 const radiusScale = d3.scaleSqrt().range([10, 30]);
@@ -81,7 +72,7 @@ loadData().then(data => {
 
     d3.select('#p').on('change', function(){
         lineParam = d3.select(this).property('value');
-        updateLinePlot(param);
+        updateLinearPlot(lineParam);
     });
     
 
@@ -116,7 +107,8 @@ loadData().then(data => {
             selected_country = param_click.country
             console.log(selected_country)
             countryName.html(selected_country);
-            
+
+            document.getElementById("linearChartContainer").style.display = "flex";
             updateLinearPlot(param);
 
             scatterPlot
@@ -132,10 +124,15 @@ loadData().then(data => {
         barChart.selectAll("g").remove();        
 
         xBar.domain(regions);
-        xBarAxis.call(d3.axisBottom(xBar));  
+        barChart.append('g')
+        .attr('transform', `translate(0, ${height-margin})`)
+        .call(d3.axisBottom(xBar));  
         
         yBar.domain(d3.extent(data, d => +d[param][year]));
-        yBarAxis.call(d3.axisLeft(yBar));
+        barChart
+        .append('g')
+        .attr('transform', `translate(${margin*2}, 0)`)
+        .call(d3.axisLeft(yBar));
 
         data_regs = []
         
@@ -173,25 +170,24 @@ loadData().then(data => {
         let country_cur = data.findIndex(d => d.country === selected_country);
         console.log(country_cur);
 
-        let xData = Object.keys(data[country_cur][param]).map(d => +d);
-        console.log(xData);
-        let yData = Object.values(data[country_cur][param]).map(d => +d);
+        let years = Object.keys(data[country_cur][param]).map(d => +d).slice(0, -5);
+        let feature = Object.values(data[country_cur][param]).map(d => +d).slice(0, -5);
         
-        x.domain(d3.extent(xData, d => d));
+        x.domain(d3.extent(years, d => d));
         lineChart.append('g')
         .attr('transform', `translate(0, ${height-margin})`)
         .call(d3.axisBottom(x));
         
-        y.domain(d3.extent(yData));
+        y.domain(d3.extent(feature));
         lineChart.append('g')
         .attr('transform', `translate(${margin*2}, 0)`)
         .call(d3.axisLeft(y));
         
         data_LP = []
     
-        for (i of Array(xData.length).keys())
+        for (i of Array(years.length).keys())
         {
-            data_LP.push({'x': xData[i], 'y': yData[i]})
+            data_LP.push({'x': years[i], 'y': feature[i]})
         }
 
         lineChart.append("path")
