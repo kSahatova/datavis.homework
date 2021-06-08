@@ -47,6 +47,7 @@ loadData().then(data => {
         yearLable.html(year);
         updateScatterPlot(xParam, yParam, rParam);
         updateBarChart(param);
+
     });
 
     d3.select('#radius').on('change', function(){
@@ -71,7 +72,8 @@ loadData().then(data => {
     });
 
     d3.select('#p').on('change', function(){
-        lineParam = d3.select(this).property('value');        
+        lineParam = d3.select(this).property('value');
+        param = lineParam;        
         updateLinearPlot(lineParam);
     });
     
@@ -115,7 +117,7 @@ loadData().then(data => {
             .selectAll("circle")
             .attr("stroke", 'black')
             .attr("stroke-width", d => d.country === selected_country ? 0.5: .0);
-
+            
 
         });
     }
